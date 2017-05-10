@@ -1,1 +1,1 @@
-# anaphora_resolution
+# anaphora resolution for rusian language
