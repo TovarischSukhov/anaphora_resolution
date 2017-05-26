@@ -30,7 +30,7 @@ def mean_vec(vectors, count):
     return np.matrix(res).mean(0).tolist()
 
 
-anaphora = pd.DataFrame({"target": [], "t_gend": [], "t_count": [], 'dif_cand_disc': [],
+anaphora = pd.DataFrame({"target": [], "t_gend": [], "t_count": [], 'dif_cand_disc': [], 'dist_in_char':[], 'c_len':[],
                          "c_gend": [], "c_count": [], 'c_pow': [], 'dif_disc_both':[],'dif_plus5':[], 'dif_minus5':[],
                          'dist': [], 'answ': [], 'is_punct': [], 'same_count': [], 'same_gend': []})
 
@@ -39,7 +39,7 @@ not_found = []
 
 def add_anaphora(i, row, anaphora):
     #print(i, row)
-    anaphora_local = pd.DataFrame({"target": [], "t_gend": [], "t_count": [], 'dif_cand_disc': [],
+    anaphora_local = pd.DataFrame({"target": [], "t_gend": [], "t_count": [], 'dif_cand_disc': [], 'dist_in_char':[], 'c_len':[],
                                    "c_gend": [], "c_count": [], 'c_pow': [],'dif_plus5':[], 'dif_minus5':[], 'dif_disc_both':[],
                                    'dist': [], 'answ': [], 'is_punct': [], 'same_count': [], 'same_gend': []})
 
@@ -82,14 +82,17 @@ def add_anaphora(i, row, anaphora):
     target_gend = row['gend'];
     target_count = row['count']
 
+    dist_in_char = 0
     number_added = 0;
     is_punct = 0;
     c = 0
     while counter_words < 25:
         c += 1
         current_posit = i - c - 1
+        # print(tokens.iloc[i - c - 1]['length_o'], tokens.iloc[i - c - 1].values)
         if tokens.iloc[i - c - 1]['lemma'] in punctuation:
             is_punct = 1
+            dist_in_char += int(tokens.iloc[i - c - 1]['length_o'])
         else:
             candidate_vec = tokens.iloc[i - c - 1]['vec']
             counter_words += 1
@@ -97,6 +100,8 @@ def add_anaphora(i, row, anaphora):
             cand_count = tokens.iloc[i - c - 1]['count']
             cand_pos = tokens.iloc[i - c - 1]['PoS']
 
+            cand_len = int(tokens.iloc[i - c - 1]['length_o'])
+            dist_in_char += int(tokens.iloc[i - c - 1]['length_o'])
             vec_count = 0
             vec_count_n = 0
             vec_after = {}
@@ -152,8 +157,8 @@ def add_anaphora(i, row, anaphora):
                 dif_vec_minus5 = cosine_similarity(c_vec_minus5, t_vec_minus5)[0][0]
             except ValueError:
                 dif_vec_minus5 = 0
-            anaphora_local.loc[len(anaphora_local) + 1] = [answ, cand_count, cand_gend, cand_pos, dif_cand_disc, dif_disc,
-                                                           dif_vec_minus5, dif_vec_plus5, dist, is_punct, same_count,
+            anaphora_local.loc[len(anaphora_local) + 1] = [answ, cand_count, cand_gend, cand_len, cand_pos, dif_cand_disc, dif_disc,
+                                                           dif_vec_minus5, dif_vec_plus5, dist, dist_in_char, is_punct, same_count,
                                                            same_gend, target_count, target_gend, target]
     if found_answ:
         #print('yay')
@@ -174,4 +179,4 @@ for i, row in tqdm(tokens.loc[tokens['anaph'] == '1.0'].iterrows()):
     #    break
 print(len(not_found))
 anaphora = anaphora.fillna('-').reset_index(drop=True)
-anaphora.to_csv('data_for_vec_mean_5.csv')
+anaphora.to_csv('data_total.csv')
